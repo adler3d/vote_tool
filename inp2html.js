@@ -39,27 +39,48 @@ var upgrade_pcsv=(pcsv)=>{
       out.arr.map((e,id)=>out[(id<pcsv.arr.length?'p':'s')+id]=e);
       out.arr_wo_me=out.arr.filter((e,i)=>i!=id);
       out.tot=qapsum(out.arr);
-      if(conf&&conf.avg)out.avg=qapavg(out.arr_wo_me);
+      //if(conf&&conf.avg)out.avg=qapavg(out.arr_wo_me);
       if(!conf||!conf.dbg){
         out=mapdrop(out,['arr_wo_me','arr']);
       }
       return out;
     });
   }
+  pcsv.gen_v2=(conf)=>{
+    var h=pcsv.head;
+    return pcsv.arr.map((e,id)=>{
+      var out={id:id,user:pcsv.get(id,'user')};
+      out.arr=h.filter(only_users).map(v=>pf(pcsv.get(id,v)));
+      out.tot=(qapsum(out.arr)/*+pf(pcsv.x2corr[id])*/).toFixed(2);
+      return out;
+    });
+  }
   pcsv.fix_influence=()=>{
     
   }
-  pcsv.apply_corr=()=>{
-    var tab=pcsv.gen({dbg:1,avg:1});
+  pcsv.calc_x2corr=()=>{
+    var tab=pcsv.gen({dbg:1});
     var u=pcsv.head.slice(1);
-    var x2corr=u.map((u,x)=>(tab.filter((e,y)=>y!=x).map(e=>e.arr[x]))).map(e=>qapavg(e));
-    pcsv.arr=tab.map((u,y)=>[u.user,...u.arr.map((e,x)=>(e-(x==y?0:x2corr[x])).toFixed(2))]);
-    //pcsv.x2corr=x2corr;
+    pcsv.x2corr=u.map((u,x)=>(tab.filter((e,y)=>y!=x).map(e=>e.arr[x]))).map(e=>qapavg(e));
+    pcsv.users=u;
     return pcsv;
-    //pcsv.arr=pcsv.arr.map((arr,y)=>arr.map((v,x)=>x?(pf(x)-):x));
+  }
+  pcsv.apply_corr=()=>{
+    var tab=pcsv.gen({dbg:1});
+    pcsv.calc_x2corr();
+    var u=pcsv.users;
+    var x2corr=pcsv.x2corr;
+    pcsv.arr=tab.map((u,y)=>[u.user,...u.arr.map((e,x)=>(e-(x==y?0:x2corr[x])).toFixed(2))]);
+    return pcsv;
+  }
+  pcsv.inject_corr=()=>{
+    pcsv.arr=pcsv.arr.map((e,y)=>e.map((v,x)=>x&&(x-1)===y?pcsv.x2corr[x-1].toFixed(2):v));
+    return pcsv;
   }
   pcsv.gen_with_corr=()=>{
-    pcsv.fix_influence();//pcsv.apply_corr();
+    pcsv.fix_influence();
+    //pcsv.inject_corr();
+    //pcsv.apply_corr();
     var tab=pcsv.gen({dbg:1});tab.map(e=>e.tot=e.tot.toFixed(2));
     var u=pcsv.head.slice(1);
     var v=u.map((u,x)=>(tab.filter((e,y)=>y!=x).map(e=>e.arr[x])));
@@ -73,7 +94,9 @@ var upgrade_pcsv=(pcsv)=>{
     })];
     var add_tot_to_end=true;
     var f=(str,pos,pcsv,arr,td,tag,bg,rg)=>{
+      var tdsys=(str,v)=>bg(v,v,v,tag('b',str));
       if(arr[0]=="#")return tag("th",tag("b",tag('center',str)));
+      if(pos.key==arr[0])return tdsys(str,230);
       if(pos.key!=arr[0])if(pos.t=='b')if(pos.x)if(pos.key!="tot"){
         var max_v=5.79;var min_v=0;
         var row=qapclone(arr);
@@ -96,10 +119,10 @@ var upgrade_pcsv=(pcsv)=>{
         var out=pf(str);
         return rg(out-min_v,out.toFixed(2),max_v-min_v,1);
       }
-      return td(str);
+      return tdsys(str,245);
     }
     var tmp={head:["#",...u,"tot"],arr:[DL,CL,HL,...pcsv.arr]};
-    if(add_tot_to_end)tmp.arr=tmp.arr.map(e=>e.concat(e[0]=="#"?"#":qapsum(e.slice(1).map(e=>pf(e))).toFixed(2)));
+    if(add_tot_to_end)tmp.arr=tmp.arr.map(e=>e.concat(e[0]=="#"?"tot":qapsum(e.slice(1).map(e=>pf(e))).toFixed(2)));
     var b=pcsv2table_v2(tmp,f);
     tab=arrmapdrop(tab,['arr_wo_me','arr']);
     return maps2table(tab)+"\n<center>inject_rows({\ncorr:(user)=>user.sum(v=>v)/(users.length-1),\ninfluence:(user)=>user.sum(v=>abs(v-user.corr))\n})</center>"+b;
@@ -109,14 +132,20 @@ var upgrade_pcsv=(pcsv)=>{
     pcsv.head=new_header;
     return pcsv;
   }
-  pcsv.reorder_v2=(sort_cb)=>{
+  pcsv.auto_reorder=()=>{
     var h=pcsv.head;
+    var u=pcsv.arr.map((e,id)=>pcsv.get(id,'user'));
+    var nh=[h[0],...u,...pcsv.head.slice(1).filter(e=>!u.includes(e))];
+    // bullshit: if('x2corr' in pcsv)pcsv.x2corr=u.map((e,id)=>pcsv.x2corr[h.slice(1).indexOf(e)]);
+    pcsv.reorder(nh);
+    //pcsv.calc_x2corr();
+    return pcsv;
+  }
+  pcsv.reorder_v2=(sort_cb)=>{
     var full=pcsv.gen({dbg:1});
     qapsort(full,sort_cb);
     pcsv.arr=full.map(e=>{return [e.user].concat(e.arr);});
-    var u=pcsv.arr.map((e,id)=>pcsv.get(id,'user'));
-    var nh=[h[0]].concat(u,h.slice(1).filter(e=>!u.includes(e)));
-    pcsv.reorder(nh);
+    pcsv.auto_reorder();
     return pcsv;
   }
   //pcsv.
@@ -142,9 +171,16 @@ var main=(tag,dev)=>{
   //
   upgrade_pcsv(pcsv);
   show_tab("pcsv.gen()");
-  pcsv.reorder_v2(e=>e.tot);
+  var true_order=upgrade_pcsv(parse_csv_with_head(csv)).apply_corr().reorder_v2(e=>e.tot);
+  pcsv.arr=true_order.arr.map(e=>pcsv.arr.filter(a=>a[0]==e[0])[0]);
+  show_obj('true_order.arr');
+  pcsv.auto_reorder();
+  pcsv.calc_x2corr();
+  pcsv.inject_corr();
+  show_obj('pcsv.x2corr');
+  //pcsv.reorder_v2(e=>e.tot);
   show_pcsv("pcsv");
-  show_tab("pcsv.gen()");
+  show_tab("pcsv.gen_v2()");
   show_txt("pcsv.gen_with_corr()");
   dev.content.reverse();
   return tag('center',tag('pre',tag('h1',"top")+dev.content.join("")));
