@@ -59,7 +59,7 @@ var upgrade_pcsv=(pcsv)=>{
     //pcsv.arr=pcsv.arr.map((arr,y)=>arr.map((v,x)=>x?(pf(x)-):x));
   }
   pcsv.gen_with_corr=()=>{
-    pcsv.fix_influence();pcsv.apply_corr();
+    pcsv.fix_influence();//pcsv.apply_corr();
     var tab=pcsv.gen({dbg:1});tab.map(e=>e.tot=e.tot.toFixed(2));
     var u=pcsv.head.slice(1);
     var v=u.map((u,x)=>(tab.filter((e,y)=>y!=x).map(e=>e.arr[x])));
@@ -71,11 +71,13 @@ var upgrade_pcsv=(pcsv)=>{
       var corr=qapavg(e);
       return qapsum(e,e=>Math.abs(e-corr)).toFixed(2);
     })];
+    var add_tot_to_end=true;
     var f=(str,pos,pcsv,arr,td,tag,bg,rg)=>{
       if(arr[0]=="#")return tag("th",tag("b",tag('center',str)));
-      if(pos.key!=arr[0])if(pos.t=='b')if(pos.x){
+      if(pos.key!=arr[0])if(pos.t=='b')if(pos.x)if(pos.key!="tot"){
         var max_v=5.79;var min_v=0;
         var row=qapclone(arr);
+        if(add_tot_to_end)row.pop();
         var sys=arr[0].includes('==');
         if(!sys){
           min_v=pf(CL[pos.x]);max_v+=min_v;//min_v+=(max_v-min_v)*0.5;
@@ -96,7 +98,9 @@ var upgrade_pcsv=(pcsv)=>{
       }
       return td(str);
     }
-    var b=pcsv2table_v2({head:["#",...u],arr:[DL,CL,HL,...pcsv.arr]},f);
+    var tmp={head:["#",...u,"tot"],arr:[DL,CL,HL,...pcsv.arr]};
+    if(add_tot_to_end)tmp.arr=tmp.arr.map(e=>e.concat(e[0]=="#"?"#":qapsum(e.slice(1).map(e=>pf(e))).toFixed(2)));
+    var b=pcsv2table_v2(tmp,f);
     tab=arrmapdrop(tab,['arr_wo_me','arr']);
     return maps2table(tab)+"\n<center>inject_rows({\ncorr:(user)=>user.sum(v=>v)/(users.length-1),\ninfluence:(user)=>user.sum(v=>abs(v-user.corr))\n})</center>"+b;
   }
