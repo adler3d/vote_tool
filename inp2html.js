@@ -55,8 +55,25 @@ var upgrade_pcsv=(pcsv)=>{
       return out;
     });
   }
+  pcsv.gen_user2arr=()=>{
+    var tab=pcsv.gen({dbg:1});
+    var u=pcsv.head.slice(1);
+    var v=u.map((u,x)=>(tab.filter((e,y)=>y!=x).map(e=>e.arr[x])));
+    return v;
+  }
+  pcsv.gen_user2influence=()=>{
+    var v=pcsv.gen_user2arr();
+    return v.map(e=>{
+      var corr=qapavg(e);
+      return qapsum(e,e=>Math.abs(e-corr)).toFixed(2);
+    });
+  }
   pcsv.fix_influence=()=>{
-    
+    var u=pcsv.head.slice(1);
+    var u2i=pcsv.gen_user2influence();
+    var u2k=u2i.map((e,i)=>e|0?20/u2i[i]:0);//txt(inspect([u2i,u2k]));
+    pcsv.arr.map(arr=>arr.map((e,x)=>{if(!x)return;var id=x-1;arr[x]=e*u2k[id];}));
+    return pcsv;
   }
   pcsv.calc_x2corr=()=>{
     var tab=pcsv.gen({dbg:1});
@@ -108,7 +125,7 @@ var upgrade_pcsv=(pcsv)=>{
           min_v=pf(CL[pos.x]);max_v+=min_v;//min_v+=(max_v-min_v)*0.5;
           //row=v[pos.x-1];
           //row=[];
-          //tab.map((e,y)=>e.arr_wo_me.map(e=>row.push(e)));
+          // tab.map((e,y)=>e.arr_wo_me.map(e=>row.push(e)));
         }
         if(sys)
         {
@@ -173,7 +190,7 @@ var main=(tag,dev)=>{
   var pcsv=parse_csv_with_head(csv);
   upgrade_pcsv(pcsv);
   show_txt("pcsv.calc_x2corr().inject_corr().reorder_v2(e=>e.tot).gen_with_corr()");
-  show_txt("pcsv.apply_corr().reorder_v2(e=>e.tot).gen_with_corr()");
+  show_txt("pcsv.apply_corr().reorder_v2(e=>e.tot).fix_influence().gen_with_corr()");
   //var true_order=upgrade_pcsv(parse_csv_with_head(csv));
   //show_txt("true_order.apply_corr().html()");
   //show_txt("true_order.reorder_v2(e=>e.tot).html()");
