@@ -5,7 +5,7 @@ var parse_inp_v0=(inp,prefix)=>{
 }
 var parse_inp_v1=(inp,nick_sep)=>{
   var arr=inp.split("\n").map(e=>e.trim());
-  return arr.map((e,id)=>{var t=e.split(":");var m=t[1].split(" ");var obj={"#":id+1,user:t[0],arr:m};return obj;});
+  return arr.map((e,id)=>{var t=e.split(nick_sep);var m=t.slice(1).join(nick_sep).split(" ");var obj={"#":id+1,user:t[0],arr:m};return obj;});
 }
 
 var conv_inp_v0_to_csv=(arr)=>{
@@ -170,9 +170,9 @@ var main=(tag,dev)=>{
   var show_pcsv=code=>dev.add_txt("show_pcsv("+code+")",pcsv2table(eval(code)));
   var inp=POST.data;
   show_txt("inp");
-  var csv=conv_inp_v0_to_csv(parse_inp_v1(inp,":"));
+  var csv=conv_inp_v0_to_csv(parse_inp_v1(inp," "));
   show_txt("csv");//show_txt("csv2table(csv)");
-  var pcsv=parse_csv_with_head(csv);
+  var pcsv=parse_csv_with_head(csv);show_pcsv("pcsv");
   upgrade_pcsv(pcsv);
   show_txt("pcsv.calc_x2corr().inject_corr().reorder_v2(e=>e.tot).gen_with_corr()");
   show_txt("pcsv.apply_corr().reorder_v2(e=>e.tot).fix_influence().gen_with_corr()");
@@ -185,5 +185,5 @@ var main=(tag,dev)=>{
   dev.content.reverse();
   return tag('center',tag('pre',tag('h1',"top")+dev.content.join("")));
 }
-
+//return ""+POST.data.split("\r").join("").split("\n").map(e=>e.trim()).join("\n").split("  ").join(" 0 ").split("\r").join("").split("\n").map(e=>e.split(" ").slice(0,13).join(" ")).join("\n");
 return qap_page_v1("nope",main);
