@@ -1,26 +1,11 @@
-var pcsv2table_impl_v2=(pcsv,cb)=>{
-  cb=("undefined"!==typeof cb)&&cb?cb:(str,pos,pcsv,arr,td,tag,bg,rg)=>td(escapeHtml(str));
-  var tag=(t,s)=>'<'+t+'>'+s+'</'+t.split(" ")[0]+'>';var td=s=>tag('td',s);
-  var bg=(r,g,b,str)=>'<td style="background-color:rgb('+r+','+g+','+b+');">'+str+'</td>';
-  var wr=(c,str)=>bg(0xff,c,c,str);var wg=(c,str)=>bg(c,0xff,c,str);
-  var rg=(v,str,max,base)=>{max=max?max:12.8;base=base?base:128;return (v<0?wr:wg)((Math.max(0.0,1.0-Math.abs(v)/max)*(0xff-base)+base)|0,str);}
-  var h=pcsv.head;
-  var head=h.map((e,id)=>cb(e,{t:'h',y:0,x:id,key:e},pcsv,h,td,tag,bg,rg)).join("");
-  var out=pcsv.arr.map((arr,y)=>{
-    return h.map((key,id)=>id<arr.length?cb(arr[id],{t:'b',y:y,x:id,key:key},pcsv,arr,td,tag,bg,rg):"<b>0</b>").join("");
-  });
-  out=out.map(e=>"<tr>"+e+"</tr>").join("");
-  return tag('table',tag('thead',tag('tr',head))+tag('tbody',out));
-}
-
-var pcsv2table_v2=(pcsv,cb)=>{
-  pcsv.get=(y,key)=>pcsv.arr[y][pcsv.head.indexOf(key)];
-  return with_style_for_center_pre_div_table(pcsv2table_impl_v2(pcsv,cb));
-}
-
-var parse_inp_v0=(inp)=>{
-  var arr=inp.split("\n").map(e=>e.trim().split("_").slice(1).join("_"));
+var parse_inp_v0=(inp,prefix)=>{
+  prefix=prefix|0?prefix:"_";
+  var arr=inp.split("\n").map(e=>e.trim().split(prefix).slice(1).join(prefix));
   return arr.map((e,id)=>{var m=e.split(" ");var obj={"#":id+1,user:m[0],arr:m.slice(1)};return obj;});
+}
+var parse_inp_v1=(inp,nick_sep)=>{
+  var arr=inp.split("\n").map(e=>e.trim());
+  return arr.map((e,id)=>{var t=e.split(":");var m=t[1].split(" ");var obj={"#":id+1,user:t[0],arr:m};return obj;});
 }
 
 var conv_inp_v0_to_csv=(arr)=>{
@@ -71,7 +56,7 @@ var upgrade_pcsv=(pcsv)=>{
   pcsv.fix_influence=()=>{
     var u=pcsv.head.slice(1);
     var u2i=pcsv.gen_user2influence();
-    var u2k=u2i.map((e,i)=>e|0?20/u2i[i]:0);//txt(inspect([u2i,u2k]));
+    var u2k=u2i.map((e,i)=>e|0?(100)/u2i[i]:0);//txt(inspect([u2i,u2k]));
     pcsv.arr.map(arr=>arr.map((e,x)=>{if(!x)return;var id=x-1;arr[x]=e*u2k[id];}));
     return pcsv;
   }
@@ -97,7 +82,7 @@ var upgrade_pcsv=(pcsv)=>{
     return pcsv;
   }
   pcsv.gen_with_corr=()=>{
-    pcsv.fix_influence();
+    //pcsv.fix_influence();
     pcsv.calc_x2corr().inject_corr();
     //pcsv.apply_corr();
     var tab=pcsv.gen({dbg:1});tab.map(e=>e.tot=e.tot.toFixed(2));
@@ -117,7 +102,7 @@ var upgrade_pcsv=(pcsv)=>{
       if(arr[0]=="#")return tag("th",tag("b",tag('center',str)));
       if(pos.key==arr[0])return tdsys(str,230);
       if(pos.key!=arr[0])if(pos.t=='b')if(pos.x)if(pos.key!="tot"){
-        var max_v=5.79;var min_v=0;
+        var max_v=5;var min_v=0;
         var row=qapclone(arr);
         if(add_tot_to_end)row.pop();
         var sys=arr[0].includes('==');
@@ -136,7 +121,7 @@ var upgrade_pcsv=(pcsv)=>{
           //min_v+=(max_v-min_v)*0.5;
         }
         var out=pf(str);
-        return rg(out-min_v,out.toFixed(2),max_v-min_v,1);
+        return rg(out-min_v,out.toFixed(2),max_v-min_v,128);
       }
       return tdsys(str,245);
     }
@@ -185,7 +170,7 @@ var main=(tag,dev)=>{
   var show_pcsv=code=>dev.add_txt("show_pcsv("+code+")",pcsv2table(eval(code)));
   var inp=POST.data;
   show_txt("inp");
-  var csv=conv_inp_v0_to_csv(parse_inp_v0(inp));
+  var csv=conv_inp_v0_to_csv(parse_inp_v1(inp,":"));
   show_txt("csv");//show_txt("csv2table(csv)");
   var pcsv=parse_csv_with_head(csv);
   upgrade_pcsv(pcsv);
