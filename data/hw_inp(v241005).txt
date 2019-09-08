@@ -1,8 +1,8 @@
-        01_GLoom:0 7 3 8 4 4 5 5
-        02_Ducat:6 0 8 10 7 7 10 9
-       03_Crebor:5 5 0 7 5 7 7 8
-04_Pathetic_Mike:7 10 7 0 8 9 10 10
-    05_Polly5315:8 4 4 9 0 7 9 7
-       06_SNappy:9 6 6 9 9 0 10 8
-      07_Vitorio:5 5 2 6 6 4 0 6
-       08_Daimos:6 3 4 6 4 6 8 0
+        GLoom|0 7 3 8 4 4 5 5
+        Ducat|6 0 8 10 7 7 10 9
+       Crebor|5 5 0 7 5 7 7 8
+Pathetic_Mike|7 10 7 0 8 9 10 10
+    Polly5315|8 4 4 9 0 7 9 7
+       SNappy|9 6 6 9 9 0 10 8
+      Vitorio|5 5 2 6 6 4 0 6
+       Daimos|6 3 4 6 4 6 8 0
