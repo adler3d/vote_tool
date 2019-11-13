@@ -16,7 +16,21 @@ var conv_inp_v0_to_csv=(arr)=>{
 var only_users=e=>!'#,user,corr,tot'.split(',').includes(e);
 var pf=parseFloat;
 var upgrade_pcsv=(pcsv)=>{
+  pcsv.fix_users=()=>{
+    var h=pcsv.head;
+    var pfget=(y,key)=>{var hid=pcsv.head.indexOf(key);return hid<0?0:pf(pcsv.get(y,key));};
+    var ph=pcsv.arr.map((e,id)=>pcsv.get(id,'user'));
+    var sh=h.filter(e=>only_users(e)&&!ph.includes(e));
+    pcsv.arr=pcsv.arr.map((e,id)=>{
+      var u=pcsv.get(id,'user');
+      var parr=ph.map(v=>pfget(id,v));
+      var sarr=sh.map(v=>pfget(id,v));
+      return [u,...parr,...sarr];
+    });
+    pcsv.head=["user",...ph,...sh];
+  }
   pcsv.gen=(conf)=>{
+    //pcsv.fix_users();
     var h=pcsv.head;
     return pcsv.arr.map((e,id)=>{
       var out={id:id,user:pcsv.get(id,'user')};
@@ -175,7 +189,7 @@ var main=(tag,dev)=>{
   var csv=conv_inp_v0_to_csv(parse_inp_v1(inp," "));
   show_txt("csv");//show_txt("csv2table(csv)");
   var pcsv=parse_csv_with_head(csv);show_pcsv("pcsv");
-  upgrade_pcsv(pcsv);
+  upgrade_pcsv(pcsv);pcsv.fix_users();
   show_txt("pcsv.calc_x2corr().inject_corr().reorder_v2(e=>e.tot).gen_with_corr()");
   show_txt("pcsv.apply_corr().reorder_v2(e=>e.tot).fix_influence().gen_with_corr()");
   //var true_order=upgrade_pcsv(parse_csv_with_head(csv));
