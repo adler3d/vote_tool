@@ -1,5 +1,21 @@
 # vote_tool
 
+img->txt:
+```js
+// https://cloud.google.com/vision/
+t=JSON.parse(POST.data);
+return (t.textAnnotations[0].description);
+```
+description->hw_inp:
+```js
+var arr=POST.data.split("\r").join("").split("\n");
+if(arr.pop()!="")return "arr.last is not empty";
+var u='kreagen,Incvisitor,CStalker,Neuedev,Rotmilll,ronniko,aliskda,realstudent,goodi52,Daimos,POMAH,nklbdev,PlusMinus'.split(",");
+var m=[];var N=13;var empty_n=qapmax(u,e=>e.length);var prefix="";for(var i=0;i<empty_n;i++)prefix+=" ";var lpad=s=>prefix.slice(s.length)+s;
+arr.map((e,i)=>getdef(m,(i%N)|0,[lpad(u[((i%N)|0)])+"|"]).push(e.split(",").join(".")));
+return ""+arr.length/N+"\n"+(m.map(e=>e.join(" ")).join("\n")).split("| ").join("|");
+```
+
 ```js
 var remove_number_before_username=e=>{
   var t=e.split("_");
