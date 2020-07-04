@@ -50,7 +50,7 @@ var upgrade_pcsv=(pcsv)=>{
     return pcsv.arr.map((e,id)=>{
       var out={id:id,user:pcsv.get(id,'user')};
       out.arr=h.filter(only_users).map(v=>pf(pcsv.get(id,v)));
-      out.tot=(qapsum(out.arr)/*+pf(pcsv.x2corr[id])*/).toFixed(2);
+      out.tot=(qapsum(out.arr)/*+pf(pcsv.x2corr[id])*/);//.toFixed(2);
       return out;
     });
   }
@@ -64,7 +64,7 @@ var upgrade_pcsv=(pcsv)=>{
     var v=pcsv.gen_user2arr();
     return v.map(e=>{
       var corr=qapavg(e);
-      return qapsum(e,e=>Math.abs(e-corr)).toFixed(2);
+      return qapsum(e,e=>Math.abs(e-corr));//.toFixed(2);
     });
   }
   pcsv.fix_influence=(base)=>{
@@ -89,11 +89,11 @@ var upgrade_pcsv=(pcsv)=>{
     var u=pcsv.users;
     var x2corr=pcsv.x2corr;
     //pcsv.arr=tab.map((u,y)=>[u.user,...u.arr.map((e,x)=>(e-(x==y?0:x2corr[x])).toFixed(2))]);
-    pcsv.arr=tab.map((u,y)=>[u.user,...u.arr.map((e,x)=>(e-x2corr[x]).toFixed(2))]);
+    pcsv.arr=tab.map((u,y)=>[u.user,...u.arr.map((e,x)=>(e-x2corr[x])/*.toFixed(2)*/)]);
     return pcsv;
   }
   pcsv.inject_corr=()=>{
-    pcsv.arr=pcsv.arr.map((e,y)=>e.map((v,x)=>x&&(x-1)===y?pcsv.x2corr[x-1].toFixed(2):v));
+    pcsv.arr=pcsv.arr.map((e,y)=>e.map((v,x)=>x&&(x-1)===y?pcsv.x2corr[x-1]/*.toFixed(2)*/:v));
     return pcsv;
   }
   pcsv.gen_with_corr=()=>{
@@ -103,6 +103,9 @@ var upgrade_pcsv=(pcsv)=>{
     var tab=pcsv.gen({dbg:1});tab.map(e=>e.tot=e.tot.toFixed(2));
     var u=pcsv.head.slice(1);
     var v=u.map((u,x)=>(tab.filter((e,y)=>y!=x).map(e=>e.arr[x])));
+    var g_max_v=qapmax(v,arr=>qapmax(arr));
+    var g_min_v=qapmin(v,arr=>qapmin(arr));
+    //return inspect({g_max_v,g_min_v,v});
     var bc=s=>"<b><center>"+s+"</center></b>";
     var HR=["<b><hr></b>",...v.map(e=>"<hr>")];
     var HL=["#",...u];
@@ -116,9 +119,9 @@ var upgrade_pcsv=(pcsv)=>{
       var tdsys=(str,v)=>bg(v,v,v,tag('b',str));
       if(without_users)if(pos.key!="#")if(pcsv.arr.filter(e=>e[0]==pos.key).length)return "";
       if(arr[0]=="#")return tag("th",tag("b",tag('center',str)));
-      if(pos.key==arr[0])return tdsys(str,230);
+      if(pos.key==arr[0])return tdsys(pf(str).toFixed(2),230);
       if(pos.key!=arr[0])if(pos.t=='b')if(pos.x)if(pos.key!="tot"){
-        var max_v=5.79;var min_v=0;
+        var max_v=(g_max_v-g_min_v)/2;var min_v=g_min_v;
         var row=qapclone(arr);
         if(add_tot_to_end)row.pop();
         var sys=arr[0].includes('==');
@@ -178,7 +181,7 @@ var upgrade_pcsv=(pcsv)=>{
     }*/
   return pcsv;
 };
-
+var sqr=x=>x*x;
 var main=(tag,dev)=>{
   var show_tab=code=>dev.add_tab("show_tab("+code+")",eval(code));
   var show_txt=code=>dev.add_txt("show_txt("+code+")",eval(code));
@@ -186,12 +189,20 @@ var main=(tag,dev)=>{
   var show_pcsv=code=>dev.add_txt("show_pcsv("+code+")",pcsv2table(eval(code)));
   var inp=POST.data;
   show_txt("inp");
-  var csv=conv_inp_v0_to_csv(parse_inp_v1(inp," "));
+  var csv=conv_inp_v0_to_csv(parse_inp_v1(inp,"|"));
   show_txt("csv");//show_txt("csv2table(csv)");
   var pcsv=parse_csv_with_head(csv);show_pcsv("pcsv");
   upgrade_pcsv(pcsv);pcsv.fix_users();
+  var count_nz_values=u=>pcsv.arr.filter((e,id)=>pcsv.get(id,u)!=0).length;
+  var stats=pcsv.head.slice(1).map(u=>0?0:{u,n:count_nz_values(u)});
+  var info={
+    users_with_zero_influence:stats.filter(e=>!e.n).map(e=>e.u),
+    voters:stats.filter(e=>e.n).map(e=>e.u),
+    stats
+  };
+  show_txt("inspect(info)");
   show_txt("pcsv.calc_x2corr().inject_corr().reorder_v2(e=>e.tot).gen_with_corr()");
-  show_txt("pcsv.apply_corr().reorder_v2(e=>e.tot).fix_influence().gen_with_corr()");
+  show_txt("pcsv.apply_corr().reorder_v2(e=>e.tot).fix_influence(100+0*sqr("+info.stats.length+")).gen_with_corr()");
   //var true_order=upgrade_pcsv(parse_csv_with_head(csv));
   //show_txt("true_order.apply_corr().html()");
   //show_txt("true_order.reorder_v2(e=>e.tot).html()");
