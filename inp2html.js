@@ -96,7 +96,7 @@ var upgrade_pcsv=(pcsv)=>{
     pcsv.arr=pcsv.arr.map((e,y)=>e.map((v,x)=>x&&(x-1)===y?pcsv.x2corr[x-1]/*.toFixed(2)*/:v));
     return pcsv;
   }
-  pcsv.gen_with_corr=()=>{
+  pcsv.gen_with_corr=(selected)=>{
     //pcsv.fix_influence(20);
     pcsv.calc_x2corr().inject_corr();
     //pcsv.apply_corr();
@@ -116,12 +116,13 @@ var upgrade_pcsv=(pcsv)=>{
     })];
     var add_tot_to_end=true;var without_users=false;
     var f=(str,pos,pcsv,arr,td,tag,bg,rg)=>{
+      if(selected&&selected.includes(pos.key))return;
       var tdsys=(str,v)=>bg(v,v,v,tag('b',str));
       if(without_users)if(pos.key!="#")if(pcsv.arr.filter(e=>e[0]==pos.key).length)return "";
       if(arr[0]=="#")return tag("th",tag("b",tag('center',str)));
       if(pos.key==arr[0])return tdsys(pf(str).toFixed(2),230);
       if(pos.key!=arr[0])if(pos.t=='b')if(pos.x)if(pos.key!="tot"){
-        var max_v=(g_max_v-g_min_v)/2;var min_v=g_min_v;
+        var max_v=(g_max_v-g_min_v)*0.8;var min_v=g_min_v;
         var row=qapclone(arr);
         if(add_tot_to_end)row.pop();
         var sys=arr[0].includes('==');
@@ -193,6 +194,9 @@ var main=(tag,dev)=>{
   show_txt("csv");//show_txt("csv2table(csv)");
   var pcsv=parse_csv_with_head(csv);show_pcsv("pcsv");
   upgrade_pcsv(pcsv);pcsv.fix_users();
+  var selected=[/*'куку'*/]; // like ban list
+  var mul=(user,koef)=>{var hid=pcsv.head.indexOf(user);pcsv.arr.map(a=>a[hid]*=koef);};
+  selected.map(e=>mul(e,0));
   var count_nz_values=u=>pcsv.arr.filter((e,id)=>pcsv.get(id,u)!=0).length;
   var stats=pcsv.head.slice(1).map(u=>0?0:{u,n:count_nz_values(u)});
   var info={
@@ -202,7 +206,7 @@ var main=(tag,dev)=>{
   };
   show_txt("inspect(info)");
   show_txt("pcsv.calc_x2corr().inject_corr().reorder_v2(e=>e.tot).gen_with_corr()");
-  show_txt("pcsv.apply_corr().reorder_v2(e=>e.tot).fix_influence(100+0*sqr("+info.stats.length+")).gen_with_corr()");
+  show_txt("pcsv.apply_corr().reorder_v2(e=>e.tot).fix_influence(100+0*sqr("+info.stats.length+")).gen_with_corr(selected)");
   //var true_order=upgrade_pcsv(parse_csv_with_head(csv));
   //show_txt("true_order.apply_corr().html()");
   //show_txt("true_order.reorder_v2(e=>e.tot).html()");
