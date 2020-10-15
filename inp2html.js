@@ -205,7 +205,7 @@ var main=(tag,dev)=>{
     stats
   };
   show_txt("inspect(info)");
-  show_txt("pcsv.calc_x2corr().inject_corr().reorder_v2(e=>e.tot).gen_with_corr()");
+  show_txt("pcsv.calc_x2corr().inject_corr().reorder_v2(e=>e.tot).gen_with_corr(selected)");
   show_txt("pcsv.apply_corr().reorder_v2(e=>e.tot).fix_influence(100+0*sqr("+info.stats.length+")).gen_with_corr(selected)");
   //var true_order=upgrade_pcsv(parse_csv_with_head(csv));
   //show_txt("true_order.apply_corr().html()");
