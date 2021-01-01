@@ -1,0 +1,7 @@
+Kiriyama DRON|7.33 5 7.06 5 4 6 3
+romanshuvalov|8.5 4.66 8.08 9 6 7 6
+Lal_Paritskiy|7 3 7.61 2 7 2 6
+        Mikle|9.5 9 8.5 5.5 8 8 7
+      3dhater|6 3 6.98 3 6.5 3 4
+          .z.|6.5 4 7.52 6 5 5.83 6
+      vindast|6.5 4 7.52 8 9 9 5.33
