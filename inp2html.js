@@ -188,7 +188,17 @@ var main=(tag,dev)=>{
   var show_txt=code=>dev.add_txt("show_txt("+code+")",eval(code));
   var show_obj=code=>dev.add_obj("show_obj("+code+")",eval(code));
   var show_pcsv=code=>dev.add_txt("show_pcsv("+code+")",pcsv2table(eval(code)));
-  var inp=POST.data;
+  var rot=s=>{
+    var out=[];s.split("\r").join("").split("\n").map(line=>line.split(" ").map((e,i)=>getdef(out,i,[]).push(e)));
+    return out.map(e=>e.join(" ")).join("\n");
+  }
+  var split_by_delim_and_then_rot_and_then_insert_nicks=(s,delim)=>{
+    var ab=POST.data.split("\r").join("").split(delim);
+    var a=ab[0].split("\n");
+    var b=rot(ab[1]);
+    return b.split("\n").map((e,i)=>a[i]+"|"+e).join("\n");
+  };
+  var inp=POST.data; //inp=split_by_delim_and_then_rot_and_then_insert_nicks(POST.data,"\n---\n");
   show_txt("inp");
   var csv=conv_inp_v0_to_csv(parse_inp_v1(inp,"|"));
   show_txt("csv");//show_txt("csv2table(csv)");
